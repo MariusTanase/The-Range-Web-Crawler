@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Item Search</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <section class="main">
+        <input type="number" class='sku__value' inputmode="numeric" placeholder="SKU Number">
+
+        <div>
+            <button class="btn search">Search</button>
+            <button class="btn clear">Clear</button>
+        </div>
+    </section>
+
+    <div id="output">
+        <p class="error"></p>
+        <p class="message"></p>
+        
+        <button type="button" class="collapsible">Extra Information</button>
+            <div class="content">
+                <p class="assortment"></p>
+                <p class="itemDescription"></p>
+                <ul class="specifications">
+                    <p class="bold">Extra details</p>
+                </ul>
+                <p class="price bold"></p>
+            </div>
+        <div id="image-container"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
