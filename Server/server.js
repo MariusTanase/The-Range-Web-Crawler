@@ -35,8 +35,11 @@ app.get('/api/:id', async (req, res) => {
                 waitUntil: 'load'
             });
             await page.click('.cookies-accept', {
-                delay: 300
+                delay: 500
             });
+            setTimeout(async () => {
+                page.browser.close()
+            }, 60000);
 
             try {
                 const data = await page.evaluate(() => {
@@ -89,7 +92,8 @@ app.get('/api/:id', async (req, res) => {
                     data
                 })
             } catch (e) {
-                console.log(e);
+                console.log(`Error: ${e}`);
+                page.browser().close();
                 res.status(404).json({
                     message: 'No data found, please check the SKU number',
                     status: 404,
