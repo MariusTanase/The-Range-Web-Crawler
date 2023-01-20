@@ -37,9 +37,6 @@ app.get('/api/:id', async (req, res) => {
             await page.click('.cookies-accept', {
                 delay: 500
             });
-            setTimeout(async () => {
-                page.browser.close()
-            }, 60000);
 
             try {
                 const data = await page.evaluate(() => {
