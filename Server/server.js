@@ -2,110 +2,66 @@ const express = require('express');
 const puppeteer = require('puppeteer');
 const cors = require('cors');
 
-const PORT = 3001 || process.env.PORT;
+const PORT = process.env.PORT || 3001;
 const app = express();
 
 app.use(express.json());
-app.use(express.urlencoded({
-    extended: true
-}));
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
-process.on('uncaughtException', function (err) {
-    console.log("Handled Error...");
-    console.log(err);
-});
+const getProductData = async (id) => {
+  const browser = await puppeteer.launch({ headless: false });
+  const page = await browser.newPage();
 
+  try {
+    await page.goto(`https://www.therange.co.uk/search?q=${id}`, { waitUntil: 'load' });
 
+    const data = await page.evaluate(() => {
+      const title = document.querySelector('#product-dyn-title')?.innerText || null;
+      const images = Array.from(document.querySelectorAll('.rsImg')).map((image) => ({
+        image: image.src,
+      }));
+      const assortmentText = document.querySelector('.multiple_assortment_info')?.innerText || null;
+      const itemDescription = document.getElementById('product-dyn-desc')?.innerText || null;
+      const itemSpecifications = Array.from(document.querySelectorAll('[data-state="selectable"] span'));
+      const specification = itemSpecifications.map((spec) => spec.innerText);
 
-let count = 0;
-// get custom id from front end
+      if (!title) {
+        return { status: 404, message: 'No data found, please check the SKU number' };
+      }
+
+      return {
+        status: 200,
+        title,
+        itemDescription,
+        specification,
+        assortmentText,
+        images,
+      };
+    });
+
+    return { success: true, data };
+  } catch (error) {
+    console.log(`Error: ${error}`);
+    return { success: false, error: 'No data found, please check the SKU number' };
+  } finally {
+    await browser.close();
+  }
+};
+
 app.get('/api/:id', async (req, res) => {
-    // get the id from the request
-    const id = req.params.id;
-    console.log(id);
-    count++;
-    // get the data from the database
-    console.log("API was called: ", count);
-        puppeteer.launch({
-            headless: false
-        }).then(async browser => {
-            const page = await browser.newPage();
-            await page.goto(`https://www.therange.co.uk/search?q=${id}`, {
-                waitUntil: 'load'
-            });
-            await page.click('.cookies-accept', {
-                delay: 500
-            });
+  const id = req.params.id;
+  const result = await getProductData(id);
 
-            try {
-                const data = await page.evaluate(() => {
-                    let data = [];
-                    
-                    let title = document.querySelector('#product-dyn-title').innerText;
-                    let images = document.querySelectorAll('.rsImg');
-                    // If there is no .multiple_assortment_info class, then it is a single product and dont have to read it           
-                    let assortment = document.querySelector('.multiple_assortment_info');
-                    let assortmentText = '';
-                    // if pupeteer doesn't find the item, it will throw an error
-                    if (assortment){
-                        assortmentText = assortment.innerText;
-                    } else {
-                        assortmentText = null;
-                    }
-
-                    let price = document.querySelector('#min_price').innerText;
-
-                    let itemDescription = document.getElementById('product-dyn-desc').innerText;
-                    // array of spans
-                    let itemSpecifications = document.querySelectorAll('[data-state="selectable"] span');
-                    // empty array to push the specifications into
-                    let specification = [];
-                    // loop through the array of spans and push the text into the empty array
-                    for (let i = 0; i < itemSpecifications.length; i++) {
-                        specification.push(itemSpecifications[i].innerText);
-                    }
-                    
-                    // set images to an array
-                    images.forEach(image => {
-                        data.push({
-                            image: image.src
-                        });
-                    });
-
-                    // set the data to an object
-                    if (title == null || title == undefined || title == "") {
-                        res.status(404).json({
-                            message: 'No data found'
-                        });
-                    }
-                    let status = 200;
-                    return {
-                        title, itemDescription, specification, assortmentText, price ,images: data, status
-                    };
-                });
-
-                res.status(200).json({
-                    data
-                })
-            } catch (e) {
-                console.log(`Error: ${e}`);
-                page.browser().close();
-                res.status(404).json({
-                    message: 'No data found, please check the SKU number',
-                    status: 404,
-                    error: e
-                });
-            }
-
-            page.on('pageerror', function (err) {
-                page.browser().close();
-            });
-
-            await page.browser().close();
-        });
+  if (result.success) {
+    res.status(result.data.status).json({ data: result.data });
+  } else {
+    console.log(result);
+    res.status(404).json({
+        message: result.error });
+    }
 });
-
+    
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+    console.log(`Server running on port ${PORT}`);
+    });
