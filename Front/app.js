@@ -65,7 +65,7 @@ function checkSkuValue(sku) {
     sku.trim();
     clearInformation()
     let value = parseInt(sku);
-    if (value === "" || value === null || value === undefined || isNaN(value) || value < 1) {
+    if (value === undefined || isNaN(value) || value < 1) {
         error.textContent = "Please enter a value";
     } else {
         error.textContent = "";
@@ -77,12 +77,12 @@ function checkSkuValue(sku) {
 const getApiData = async (sku) => {
     let response = await fetch(`http://localhost:3001/api/${sku}`);
     let data = await response.json();
-
-    if (data.status == 404) {
+    searchButton.disabled = true;
+    if (data.data.message) {
         searchButton.disabled = false;
         searchButton.textContent = "Search";
         searchButton.classList.remove("searching");
-        return error.textContent = data.message;
+        return error.textContent = data.data.message;
     } else {
         error.textContent = "";
         displayData(data);
@@ -111,7 +111,7 @@ let displayData = (data) => {
     for (let i = 0; i < coll.length; i++) {
         coll[i].style.display = "block";
     };
-    let specifications = data.data.specification;
+    let specifications = data?.data.specification;
 
     if (specifications == null) {
         specifications.style.display = "none";
@@ -122,12 +122,7 @@ let displayData = (data) => {
         });
     }
 
-    // set the price
-    if (data.data.price == null) {
-        price.textContent = "Price: Not available";
-    } else {
-        price.textContent = `Price: ${data.data.price}`;
-    }
+
 
     messageElement.textContent = data.data.title;
     itemDescription.textContent = data.data.itemDescription;
