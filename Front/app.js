@@ -75,9 +75,8 @@ function checkSkuValue(sku) {
 
 
 const getApiData = async (sku) => {
-    let response = await fetch(`http://172.17.0.34:3004/api/${sku}`);
+    let response = await fetch(`http://localhost:3001/api/${sku}`);
     let data = await response.json();
-    console.log(data)
 
     if (data.status == 404) {
         searchButton.disabled = false;
